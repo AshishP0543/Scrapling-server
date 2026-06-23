@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Scrapling Dashboard</title>
+<style>
+  :root{
+    --bg:#0c0f17; --panel:#141a26; --panel2:#1b2233; --line:#26304a;
+    --txt:#e6ecf5; --muted:#8a97b3; --accent:#5b8cff; --accent2:#7c5cff;
+    --ok:#33d17a; --warn:#ffb454; --err:#ff6b81; --chip:#22304d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%,#18223a 0,transparent),var(--bg);color:var(--txt)}
+  header{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid var(--line);
+    background:linear-gradient(90deg,#101524,#0c0f17)}
+  header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.3px}
+  header .logo{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:18px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 6px 18px #5b8cff44}
+  header .sub{color:var(--muted);font-size:12px}
+  .caps{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .cap{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--chip);color:var(--muted);
+    border:1px solid var(--line)}
+  .cap.on{color:var(--ok);border-color:#23593f} .cap.off{color:var(--err);border-color:#5a2330}
+  .tabs{display:flex;gap:4px;padding:10px 18px 0;border-bottom:1px solid var(--line);background:var(--bg)}
+  .tab{padding:9px 16px;border:1px solid transparent;border-bottom:none;border-radius:10px 10px 0 0;
+    cursor:pointer;color:var(--muted);font-weight:600}
+  .tab:hover{color:var(--txt)}
+  .tab.active{background:var(--panel);color:var(--txt);border-color:var(--line)}
+  main{padding:20px;max-width:1280px;margin:0 auto}
+  .view{display:none} .view.active{display:block}
+  .grid{display:grid;grid-template-columns:380px 1fr;gap:18px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .card h2{margin:0 0 4px;font-size:15px}
+  .card .hint{color:var(--muted);font-size:12px;margin:0 0 14px}
+  label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px;font-weight:600}
+  input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    border-radius:9px;padding:9px 11px;font:inherit;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px #5b8cff22}
+  textarea{resize:vertical;min-height:70px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+  .row{display:flex;gap:10px} .row>*{flex:1}
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:8px}
+  .chk{display:flex;align-items:center;gap:8px;color:var(--txt);font-size:13px;cursor:pointer}
+  .chk input{width:auto}
+  button{cursor:pointer;border:none;border-radius:10px;padding:11px 16px;font-weight:700;font:inherit;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  button.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--txt);font-weight:600}
+  button.sm{padding:6px 11px;font-size:12px}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .btnbar{display:flex;gap:10px;margin-top:16px;align-items:center}
+  .status{font-size:12px;color:var(--muted)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:700}
+  .pill.ok{background:#13351f;color:var(--ok)} .pill.bad{background:#3a1822;color:var(--err)}
+  pre,.out{background:#0a0d15;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;white-space:pre-wrap;word-break:break-word;
+    max-height:520px;margin:0}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+  td.idx{color:var(--muted);width:38px}
+  .tablewrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .badge{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:12px}
+  .badge b{color:var(--accent)}
+  .preset{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}
+  .preset button{background:var(--chip);border:1px solid var(--line);color:var(--muted);font-weight:600}
+  .saved{color:var(--ok);font-size:12px;margin-left:6px}
+  .empty{color:var(--muted);padding:30px;text-align:center}
+  .keyrow{display:flex;align-items:center;gap:8px}
+  .keyrow input{flex:1}
+  a{color:var(--accent)}
+  .docref{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .docref b{color:var(--ok)}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .thumb{background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    display:flex;flex-direction:column;text-decoration:none}
+  .thumb .imgbox{height:120px;display:grid;place-items:center;background:#0a0d15;overflow:hidden}
+  .thumb img{max-width:100%;max-height:120px;object-fit:contain;display:block}
+  .thumb .imgbox.broken::after{content:"⛔ no preview";color:var(--muted);font-size:11px}
+  .thumb .cap{padding:6px 8px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .thumb .tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:10px;background:var(--chip);
+    color:var(--accent);margin-bottom:3px}
+  td.url{word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px}
+  td.url a{color:var(--accent)}
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+  .sw{border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer}
+  .sw .chip{height:56px} .sw .lbl{padding:5px 7px;font-size:11px;font-family:ui-monospace,monospace;
+    background:var(--panel2);display:flex;justify-content:space-between;gap:4px}
+  .sw .lbl .n{color:var(--muted)}
+  .gradgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .grad{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .grad .g{height:80px} .grad .c{padding:6px 8px;font-size:10.5px;font-family:ui-monospace,monospace;
+    color:var(--muted);background:var(--panel2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fontrow{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--panel2)}
+  .fontrow .name{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:4px}
+  .fontrow .sample{font-size:26px;line-height:1.25;color:var(--txt)}
+  .fontrow .sub{font-size:11px;color:var(--muted);margin-top:4px;word-break:break-all}
+  .brand-hero h2{font-size:22px;margin:0 0 4px} .brand-hero .tag{color:var(--accent);font-size:14px;margin-bottom:10px}
+  .brand-hero p{margin:6px 0;color:var(--txt)} .brand-hero .kv{color:var(--muted);font-size:13px}
+  .brand-hero .kv b{color:var(--txt)}
+  .campaigns{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
+  .ccard{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel2)}
+  .ccard .t{font-weight:700;margin-bottom:4px} .ccard .d{font-size:12px;color:var(--muted)}
+  .ccard .when{font-size:11px;color:var(--warn);margin-top:6px}
+  .sectitle{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 6px;font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🕷</div>
+  <div>
+    <h1>Scrapling Dashboard</h1>
+    <div class="sub">Fetch · Parse · Extract with AI — explore every power of Scrapling</div>
+  </div>
+  <div class="caps" id="caps"></div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-view="fetch">🌐 Fetch &amp; Explore</div>
+  <div class="tab" data-view="select">🎯 Selector Playground</div>
+  <div class="tab" data-view="assets">🖼️ Media &amp; Assets</div>
+  <div class="tab" data-view="brand">🎨 Brand Identity</div>
+  <div class="tab" data-view="ai">🤖 AI Extract</div>
+  <div class="tab" data-view="keys">⚙️ API Keys</div>
+</div>
+
+<main>
+  <!-- ===================== FETCH ===================== -->
+  <section class="view active" id="view-fetch">
+    <div class="grid">
+      <div class="card">
+        <h2>Request</h2>
+        <p class="hint">Pick an engine and fire a request. Stealthy &amp; Dynamic drive a real browser.</p>
+        <label>URL</label>
+        <input id="f-url" placeholder="example.com" value="https://quotes.toscrape.com" />
+        <label>Fetcher engine</label>
+        <select id="f-engine">
+          <option value="basic">Basic — fast HTTP (curl_cffi, TLS fingerprinting)</option>
+          <option value="stealthy">Stealthy — anti-bot browser (Cloudflare solver)</option>
+          <option value="dynamic">Dynamic — Playwright browser (JS rendering)</option>
+        </select>
+
+        <!-- basic options -->
+        <div class="eng-opts" data-eng="basic">
+          <div class="row">
+            <div><label>Method</label>
+              <select id="b-method"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select>
+            </div>
+            <div><label>Impersonate</label>
+              <select id="b-impersonate">
+                <option value="chrome">chrome</option><option value="firefox">firefox</option>
+                <option value="safari">safari</option><option value="none">none</option>
+              </select>
+            </div>
+          </div>
+          <label>Timeout (s)</label><input id="b-timeout" type="number" value="30" />
+          <div class="checks">
+            <label class="chk"><input type="checkbox" id="b-follow" checked> follow_redirects</label>
+            <label class="chk"><input type="checkbox" id="b-stealthy" checked> stealthy_headers</label>
+            <label class="chk"><input type="checkbox" id="b-http3"> http3</label>
+          </div>
+          <label>Custom headers (JSON, optional)</label>
+          <textarea id="b-headers" placeholder='{"X-Test": "1"}'></textarea>
+          <label>Body (for POST/PUT — JSON or raw)</label>
+          <textarea id="b-body" placeholder='{"key":"value"}'></textarea>
+          <label>Proxy (optional)</label>
+          <input id="b-proxy" placeholder="http://user:pass@host:port" />
+        </div>
+
+        <!-- browser options -->
+        <div class="eng-opts" data-eng="browser" style="display:none">
+          <label>Timeout (ms)</label><input id="w-timeout" type="number" value="30000" />
+          <label>Extra wait after load (ms)</label><input id="w-wait" type="number" value="0" />
+          <label>Wait for selector (CSS, optional)</label><input id="w-waitsel" placeholder=".content" />
+          <div class="checks">
+            <label class="chk"><input type="checkbox" id="w-headless" checked> headless</label>
+            <label class="chk"><input type="checkbox" id="w-netidle"> network_idle</label>
+            <label class="chk"><input type="checkbox" id="w-disres"> disable_resources</label>
+            <label class="chk"><input type="checkbox" id="w-ads"> block_ads</label>
+            <label class="chk"><input type="checkbox" id="w-gsearch" checked> google_search</label>
+            <label class="chk stealth-only"><input type="checkbox" id="w-cf"> solve_cloudflare</label>
+            <label class="chk stealth-only"><input type="checkbox" id="w-webrtc" checked> block_webrtc</label>
+            <label class="chk stealth-only"><input type="checkbox" id="w-canvas"> hide_canvas</label>
+          </div>
+          <label>Proxy (optional)</label>
+          <input id="w-proxy" placeholder="http://user:pass@host:port" />
+        </div>
+
+        <div class="btnbar">
+          <button id="f-go">Fetch ▶</button>
+          <span class="status" id="f-status"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Response</h2>
+        <div id="f-meta" class="meta"></div>
+        <div id="f-empty" class="empty">No response yet — fetch a page to begin.</div>
+        <div id="f-result" style="display:none">
+          <div class="btnbar" style="margin:0 0 10px">
+            <button class="ghost sm" data-vmode="rendered">Preview text</button>
+            <button class="ghost sm" data-vmode="html">Raw HTML</button>
+            <button class="ghost sm" data-vmode="headers">Headers</button>
+            <button class="ghost sm" id="f-toselect">Send to Playground →</button>
+          </div>
+          <div class="out" id="f-body"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SELECT ===================== -->
+  <section class="view" id="view-select">
+    <div class="grid">
+      <div class="card">
+        <h2>Selector</h2>
+        <div class="docref" id="s-docref">No page loaded — fetch one first, or paste HTML below.</div>
+        <label>Selector type</label>
+        <select id="s-type">
+          <option value="css">CSS — .class, #id, tag::text, [attr]</option>
+          <option value="xpath">XPath — //div[@class='x']</option>
+          <option value="regex">Regex — re() over text</option>
+          <option value="find_by_text">find_by_text (partial)</option>
+          <option value="find_all">find_all (tag name)</option>
+        </select>
+        <label>Query</label>
+        <input id="s-query" placeholder=".quote .text::text" value=".quote .text::text" />
+        <div class="preset" id="s-presets"></div>
+        <div class="row">
+          <div><label>Output</label>
+            <select id="s-mode">
+              <option value="text">text</option>
+              <option value="html">outer HTML</option>
+              <option value="attr">attribute</option>
+            </select>
+          </div>
+          <div><label>Attribute (for attr mode)</label><input id="s-attr" placeholder="href" /></div>
+        </div>
+        <label>Or paste raw HTML (used when no page is loaded)</label>
+        <textarea id="s-html" placeholder="<html>…</html>"></textarea>
+        <div class="btnbar">
+          <button id="s-go">Run selector ▶</button>
+          <span class="status" id="s-status"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Matches <span id="s-count" class="status"></span></h2>
+        <div id="s-empty" class="empty">Run a selector to see matches.</div>
+        <div class="tablewrap" id="s-tablewrap" style="display:none">
+          <table><thead><tr><th class="idx">#</th><th>Value</th></tr></thead><tbody id="s-rows"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ASSETS ===================== -->
+  <section class="view" id="view-assets">
+    <div class="card" style="margin-bottom:16px">
+      <div class="btnbar" style="margin:0;flex-wrap:wrap">
+        <button id="as-go">Extract all media &amp; assets ▶</button>
+        <span class="docref" id="as-docref" style="margin:0"></span>
+        <span class="status" id="as-status"></span>
+      </div>
+      <p class="hint" style="margin:10px 0 0">💡 Stores lazy-load product images with JavaScript. If images are missing,
+        re-fetch the page with the <b>Dynamic</b> or <b>Stealthy</b> engine (turn on <b>network_idle</b>, and set a
+        small extra wait) so the images load before extraction.</p>
+      <div class="meta" id="as-counts" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card" id="as-imgcard" style="display:none;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <h2 style="margin:0">Images <span class="status" id="as-imgn"></span></h2>
+        <button class="ghost sm" id="as-copyimg">Copy URLs</button>
+        <button class="ghost sm" id="as-dljson">Download JSON</button>
+      </div>
+      <div class="gallery" id="as-gallery"></div>
+    </div>
+
+    <div class="grid" id="as-tables" style="display:none">
+      <div class="card">
+        <h2>Links <span class="status" id="as-linkn"></span></h2>
+        <div class="tablewrap"><table><thead><tr><th class="idx">#</th><th>Text</th><th>URL</th></tr></thead>
+          <tbody id="as-links"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h2>Media · Scripts · Styles</h2>
+        <div class="tablewrap"><table><thead><tr><th class="idx">#</th><th>Kind</th><th>URL</th></tr></thead>
+          <tbody id="as-misc"></tbody></table></div>
+        <h2 style="margin-top:16px">Page metadata</h2>
+        <div class="out" id="as-meta"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BRAND ===================== -->
+  <section class="view" id="view-brand">
+    <div class="card" style="margin-bottom:16px">
+      <div class="btnbar" style="margin:0;flex-wrap:wrap">
+        <button id="br-go">Analyze brand identity ▶</button>
+        <label class="chk" style="margin:0"><input type="checkbox" id="br-ai" checked> use Gemini for story / campaigns</label>
+        <span class="docref" id="br-docref" style="margin:0"></span>
+        <span class="status" id="br-status"></span>
+      </div>
+      <p class="hint" style="margin:10px 0 0">Reads the site's CSS + DOM for colors, gradients, fonts, logos &amp; textures,
+        then (optionally) asks Gemini to write the brand story, campaigns, offers &amp; new arrivals.</p>
+    </div>
+
+    <div id="br-empty" class="empty">Fetch a brand's page first, then analyze.</div>
+    <div id="br-result" style="display:none">
+      <!-- AI brand summary -->
+      <div class="card brand-hero" id="br-hero" style="display:none;margin-bottom:16px"></div>
+
+      <div class="grid">
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <h2>Color palette <span class="status" id="br-coln"></span></h2>
+            <div class="swatches" id="br-colors"></div>
+            <h2 style="margin-top:16px">Brand color tokens</h2>
+            <div class="swatches" id="br-vars"></div>
+            <div id="br-theme" class="meta" style="margin-top:12px"></div>
+          </div>
+          <div class="card" id="br-gradcard" style="margin-bottom:16px;display:none">
+            <h2>Gradients <span class="status" id="br-gradn"></span></h2>
+            <div class="gradgrid" id="br-grads"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <h2>Typography <span class="status" id="br-fontn"></span></h2>
+            <div id="br-fonts"></div>
+          </div>
+          <div class="card" id="br-logocard" style="margin-bottom:16px;display:none">
+            <h2>Logos</h2>
+            <div class="gallery" id="br-logos"></div>
+          </div>
+          <div class="card" id="br-texcard" style="display:none">
+            <h2>Textures &amp; patterns</h2>
+            <div class="gallery" id="br-textures"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== AI ===================== -->
+  <section class="view" id="view-ai">
+    <div class="grid">
+      <div class="card">
+        <h2>AI Extract <span class="status">· Gemini</span></h2>
+        <div class="docref" id="ai-docref">No page loaded — fetch one first, or paste content below.</div>
+        <label>Model</label>
+        <select id="ai-model">
+          <option value="gemini-2.5-flash">gemini-2.5-flash (fast, cheap)</option>
+          <option value="gemini-2.5-pro">gemini-2.5-pro (smartest)</option>
+          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+          <option value="gemini-flash-latest">gemini-flash-latest</option>
+        </select>
+        <label>What should Gemini extract?</label>
+        <textarea id="ai-instruction" placeholder="Extract every quote with its author and tags as a JSON array.">Extract every quote with its author and tags as a JSON array of {quote, author, tags}.</textarea>
+        <div class="preset" id="ai-presets"></div>
+        <label>Or paste content (used when no page is loaded)</label>
+        <textarea id="ai-content" placeholder="Paste page text / HTML…"></textarea>
+        <div class="btnbar">
+          <button id="ai-go">Extract with Gemini ✨</button>
+          <span class="status" id="ai-status"></span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Result</h2>
+        <div id="ai-empty" class="empty">The page is converted to markdown and sent to Gemini, which returns structured JSON.</div>
+        <div id="ai-result" style="display:none">
+          <div class="meta" id="ai-meta"></div>
+          <div class="out" id="ai-out"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== KEYS ===================== -->
+  <section class="view" id="view-keys">
+    <div class="card" style="max-width:640px">
+      <h2>AI Provider API Keys</h2>
+      <p class="hint">Keys are stored only in this browser (localStorage) and sent directly to the
+        provider with each request. They are never written to disk on the server.
+        <b>Gemini</b> is the active engine for the AI Extract tab.</p>
+
+      <label>Google Gemini API key <span class="pill ok">active</span></label>
+      <div class="keyrow">
+        <input id="k-gemini" type="password" placeholder="AIza…" autocomplete="off" />
+        <button class="ghost sm" data-toggle="k-gemini">show</button>
+      </div>
+      <p class="hint" style="margin-top:6px">Get one free at
+        <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></p>
+
+      <label>OpenAI API key <span class="pill bad">stored only</span></label>
+      <div class="keyrow">
+        <input id="k-openai" type="password" placeholder="sk-…" autocomplete="off" />
+        <button class="ghost sm" data-toggle="k-openai">show</button>
+      </div>
+
+      <label>Anthropic API key <span class="pill bad">stored only</span></label>
+      <div class="keyrow">
+        <input id="k-anthropic" type="password" placeholder="sk-ant-…" autocomplete="off" />
+        <button class="ghost sm" data-toggle="k-anthropic">show</button>
+      </div>
+
+      <div class="btnbar">
+        <button id="k-save">Save keys</button>
+        <button class="ghost" id="k-clear">Clear all</button>
+        <span class="saved" id="k-saved"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+let STATE = { docId:null, lastHtml:"", lastResp:null };
+
+// ---------- tabs ----------
+$$(".tab").forEach(t => t.onclick = () => {
+  $$(".tab").forEach(x=>x.classList.remove("active"));
+  $$(".view").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  $("#view-"+t.dataset.view).classList.add("active");
+});
+
+// ---------- keys ----------
+const KEYS = ["gemini","openai","anthropic"];
+function loadKeys(){ KEYS.forEach(k => $("#k-"+k).value = localStorage.getItem("scrapling_"+k) || ""); }
+$("#k-save").onclick = () => {
+  KEYS.forEach(k => localStorage.setItem("scrapling_"+k, $("#k-"+k).value.trim()));
+  $("#k-saved").textContent = "✓ saved";
+  setTimeout(()=>$("#k-saved").textContent="", 1800);
+};
+$("#k-clear").onclick = () => { KEYS.forEach(k=>{localStorage.removeItem("scrapling_"+k);$("#k-"+k).value="";}); };
+$$("[data-toggle]").forEach(b => b.onclick = () => {
+  const el = $("#"+b.dataset.toggle);
+  el.type = el.type==="password" ? "text":"password"; b.textContent = el.type==="password"?"show":"hide";
+});
+const geminiKey = () => localStorage.getItem("scrapling_gemini") || "";
+
+// ---------- api ----------
+async function api(path, body){
+  const r = await fetch(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "request failed");
+  return j.data;
+}
+function esc(s){ return String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+// ---------- capabilities ----------
+fetch("/api/capabilities").then(r=>r.json()).then(c=>{
+  const order=[["basic","Basic"],["stealthy","Stealthy"],["dynamic","Dynamic"],["browsers","Browsers"],["gemini","Gemini"]];
+  $("#caps").innerHTML = order.map(([k,label])=>{
+    const on = c[k]; return `<span class="cap ${on?'on':'off'}">${on?'●':'○'} ${label}</span>`;
+  }).join("");
+});
+
+// ---------- fetch tab ----------
+const engOpts = () => {
+  const eng = $("#f-engine").value;
+  $$(".eng-opts[data-eng='basic']").forEach(e=>e.style.display = eng==="basic"?"":"none");
+  $$(".eng-opts[data-eng='browser']").forEach(e=>e.style.display = eng==="basic"?"none":"");
+  $$(".stealth-only").forEach(e=>e.style.display = eng==="stealthy"?"":"none");
+};
+$("#f-engine").onchange = engOpts; engOpts();
+
+function jsonOrNull(txt){ try{ return txt.trim()?JSON.parse(txt):null; }catch(e){ return null; } }
+
+$("#f-go").onclick = async () => {
+  const eng = $("#f-engine").value;
+  let options = {};
+  if(eng==="basic"){
+    options = {
+      method:$("#b-method").value, impersonate:$("#b-impersonate").value,
+      timeout:$("#b-timeout").value, follow_redirects:$("#b-follow").checked,
+      stealthy_headers:$("#b-stealthy").checked, http3:$("#b-http3").checked,
+      headers:jsonOrNull($("#b-headers").value), body:$("#b-body").value, proxy:$("#b-proxy").value
+    };
+  } else {
+    options = {
+      timeout:$("#w-timeout").value, wait:$("#w-wait").value, wait_selector:$("#w-waitsel").value,
+      headless:$("#w-headless").checked, network_idle:$("#w-netidle").checked,
+      disable_resources:$("#w-disres").checked, block_ads:$("#w-ads").checked,
+      google_search:$("#w-gsearch").checked, proxy:$("#w-proxy").value
+    };
+    if(eng==="stealthy"){ options.solve_cloudflare=$("#w-cf").checked; options.block_webrtc=$("#w-webrtc").checked; options.hide_canvas=$("#w-canvas").checked; }
+  }
+  const btn=$("#f-go"); btn.disabled=true;
+  $("#f-status").textContent = eng==="basic" ? "fetching…" : "launching browser… (can take 10–40s)";
+  try{
+    const d = await api("/api/fetch", {url:$("#f-url").value, fetcher:eng, options});
+    STATE.docId=d.doc_id; STATE.lastResp=d; STATE.lastHtml=d.html;
+    renderResp(d); syncDocRefs();
+    $("#f-status").textContent = "done";
+  }catch(e){ $("#f-status").innerHTML = `<span class="pill bad">error</span> ${esc(e.message)}`; }
+  finally{ btn.disabled=false; }
+};
+
+function renderResp(d){
+  $("#f-empty").style.display="none"; $("#f-result").style.display="";
+  const ok = d.status && d.status<400;
+  $("#f-meta").innerHTML = [
+    `<span class="badge">status <b class="pill ${ok?'ok':'bad'}">${d.status??'?'} ${esc(d.reason||'')}</b></span>`,
+    `<span class="badge">title <b>${esc(d.title||'—')}</b></span>`,
+    `<span class="badge">size <b>${(d.size/1024).toFixed(1)} KB</b></span>`,
+    `<span class="badge">doc <b>${d.doc_id}</b></span>`,
+    `<span class="badge">final url <b>${esc(d.final_url||'')}</b></span>`,
+  ].join("");
+  showBody("rendered");
+}
+function showBody(mode){
+  const d=STATE.lastResp; if(!d) return;
+  const el=$("#f-body");
+  if(mode==="headers") el.textContent = JSON.stringify(d.headers,null,2);
+  else if(mode==="html") el.textContent = d.html.slice(0,200000);
+  else {
+    const tmp=document.createElement("div"); tmp.innerHTML=d.html;
+    tmp.querySelectorAll("script,style,noscript").forEach(n=>n.remove());
+    el.textContent = (tmp.textContent||"").replace(/\n\s*\n\s*\n/g,"\n\n").trim().slice(0,60000);
+  }
+}
+$$("[data-vmode]").forEach(b=> b.onclick=()=>showBody(b.dataset.vmode));
+$("#f-toselect").onclick = () => { $$(".tab").find(t=>t.dataset.view==="select").click(); };
+
+function syncDocRefs(){
+  const txt = STATE.docId
+    ? `Using fetched page <b>${STATE.docId}</b>${STATE.lastResp?.final_url?` — ${esc(STATE.lastResp.final_url)}`:""}`
+    : "No page loaded — fetch one first, or paste HTML below.";
+  $("#s-docref").innerHTML = txt;
+  $("#ai-docref").innerHTML = STATE.docId
+    ? `Using fetched page <b>${STATE.docId}</b> (sent as markdown)`
+    : "No page loaded — fetch one first, or paste content below.";
+  $("#as-docref").innerHTML = STATE.docId
+    ? `from page <b>${STATE.docId}</b>`
+    : "No page loaded — fetch one in the first tab.";
+  $("#br-docref").innerHTML = STATE.docId
+    ? `from page <b>${STATE.docId}</b>`
+    : "No page loaded — fetch one in the first tab.";
+}
+
+// ---------- selector tab ----------
+const SEL_PRESETS = [
+  ["all links","css","a::attr(href)","attr","href"],
+  ["all text","css","body","text",""],
+  ["headings","css","h1, h2, h3","text",""],
+  ["images","css","img::attr(src)","attr","src"],
+  ["xpath divs","xpath","//div[@class]","html",""],
+  ["emails (regex)","regex","[\\w.+-]+@[\\w-]+\\.[\\w.-]+","text",""],
+];
+$("#s-presets").innerHTML = SEL_PRESETS.map((p,i)=>`<button class="sm" data-p="${i}">${p[0]}</button>`).join("");
+$$("#s-presets [data-p]").forEach(b=>b.onclick=()=>{
+  const p=SEL_PRESETS[b.dataset.p]; $("#s-type").value=p[1]; $("#s-query").value=p[2]; $("#s-mode").value=p[3]; $("#s-attr").value=p[4];
+});
+$("#s-go").onclick = async () => {
+  const body = {
+    doc_id:STATE.docId, html:$("#s-html").value || null,
+    selector_type:$("#s-type").value, query:$("#s-query").value,
+    mode:$("#s-mode").value, attr:$("#s-attr").value
+  };
+  $("#s-status").textContent="running…";
+  try{
+    const d = await api("/api/parse", body);
+    $("#s-status").textContent="";
+    $("#s-count").textContent = `· ${d.count} match${d.count===1?'':'es'}`;
+    $("#s-empty").style.display = d.results.length?"none":"block";
+    $("#s-tablewrap").style.display = d.results.length?"":"none";
+    $("#s-rows").innerHTML = d.results.map((v,i)=>
+      `<tr><td class="idx">${i+1}</td><td>${esc(v==null?"∅":v)}</td></tr>`).join("");
+  }catch(e){ $("#s-status").innerHTML=`<span class="pill bad">error</span> ${esc(e.message)}`; }
+};
+
+// ---------- assets tab ----------
+let ASSETS = null;
+$("#as-go").onclick = async () => {
+  if(!STATE.docId){ $("#as-status").innerHTML=`<span class="pill bad">no page</span> fetch one first`; return; }
+  const btn=$("#as-go"); btn.disabled=true; $("#as-status").textContent="scanning…";
+  try{
+    const d = await api("/api/assets", {doc_id:STATE.docId});
+    ASSETS=d; renderAssets(d); $("#as-status").textContent="done";
+  }catch(e){ $("#as-status").innerHTML=`<span class="pill bad">error</span> ${esc(e.message)}`; }
+  finally{ btn.disabled=false; }
+};
+
+function renderAssets(d){
+  const c=d.counts;
+  $("#as-counts").innerHTML = [
+    ["images",c.images],["links",c.links],["media",c.media],["scripts",c.scripts],["styles",c.styles]
+  ].map(([k,v])=>`<span class="badge">${k} <b>${v}</b></span>`).join("");
+
+  // gallery
+  $("#as-imgcard").style.display = d.images.length?"":"none";
+  $("#as-imgn").textContent = `· ${d.images.length}`;
+  $("#as-gallery").innerHTML = d.images.map(im=>{
+    const cap = im.alt || im.url.split("/").pop().split("?")[0] || "image";
+    return `<a class="thumb" href="${esc(im.url)}" target="_blank" rel="noreferrer" title="${esc(im.url)}">
+      <div class="imgbox"><img loading="lazy" src="${esc(im.url)}" referrerpolicy="no-referrer"
+        onerror="this.remove();this.parentNode.classList.add('broken')"></div>
+      <div class="cap"><span class="tag">${esc(im.kind||'img')}</span><br>${esc(cap)}</div></a>`;
+  }).join("");
+
+  // tables
+  $("#as-tables").style.display="";
+  $("#as-linkn").textContent = `· ${d.links.length}`;
+  $("#as-links").innerHTML = d.links.map((l,i)=>
+    `<tr><td class="idx">${i+1}</td><td>${esc(l.text||"—")}</td>
+      <td class="url"><a href="${esc(l.url)}" target="_blank" rel="noreferrer">${esc(l.url)}</a></td></tr>`).join("")
+    || `<tr><td colspan="3" class="empty">none</td></tr>`;
+
+  const misc = [
+    ...d.media.map(m=>({kind:m.kind,url:m.url})),
+    ...d.scripts.map(u=>({kind:"script",url:u})),
+    ...d.styles.map(u=>({kind:"stylesheet",url:u})),
+  ];
+  $("#as-misc").innerHTML = misc.map((m,i)=>
+    `<tr><td class="idx">${i+1}</td><td>${esc(m.kind)}</td>
+      <td class="url"><a href="${esc(m.url)}" target="_blank" rel="noreferrer">${esc(m.url)}</a></td></tr>`).join("")
+    || `<tr><td colspan="3" class="empty">none</td></tr>`;
+
+  $("#as-meta").textContent = JSON.stringify(d.meta,null,2);
+}
+$("#as-copyimg").onclick = () => {
+  if(!ASSETS) return;
+  navigator.clipboard.writeText(ASSETS.images.map(i=>i.url).join("\n"));
+  $("#as-status").textContent="image URLs copied ✓"; setTimeout(()=>$("#as-status").textContent="",1500);
+};
+$("#as-dljson").onclick = () => {
+  if(!ASSETS) return;
+  const blob=new Blob([JSON.stringify(ASSETS,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=`assets-${STATE.docId||"page"}.json`; a.click();
+};
+
+// ---------- brand tab ----------
+let _fontFace = 0;
+$("#br-go").onclick = async () => {
+  if(!STATE.docId){ $("#br-status").innerHTML=`<span class="pill bad">no page</span> fetch one first`; return; }
+  const useAI = $("#br-ai").checked;
+  if(useAI && !geminiKey()){ $("#br-status").innerHTML=`<span class="pill bad">no key</span> add a Gemini key (or uncheck Gemini)`; return; }
+  const btn=$("#br-go"); btn.disabled=true;
+  $("#br-status").textContent = useAI ? "reading CSS + asking Gemini…" : "reading CSS…";
+  try{
+    const d = await api("/api/brand", {doc_id:STATE.docId, gemini_key:useAI?geminiKey():"", model:$("#ai-model")?.value});
+    renderBrand(d); $("#br-status").textContent="done";
+  }catch(e){ $("#br-status").innerHTML=`<span class="pill bad">error</span> ${esc(e.message)}`; }
+  finally{ btn.disabled=false; }
+};
+
+function swatch(hex, sub){
+  return `<div class="sw" title="copy ${esc(hex)}" onclick="navigator.clipboard.writeText('${esc(hex)}')">
+    <div class="chip" style="background:${esc(hex)}"></div>
+    <div class="lbl"><span>${esc(hex)}</span><span class="n">${esc(sub||"")}</span></div></div>`;
+}
+
+function renderBrand(b){
+  $("#br-empty").style.display="none"; $("#br-result").style.display="";
+
+  // colors
+  $("#br-coln").textContent = `· ${b.colors.length}`;
+  $("#br-colors").innerHTML = b.colors.map(c=>swatch(c.hex, "×"+c.count)).join("") || "<span class='empty'>none</span>";
+  $("#br-vars").innerHTML = (b.css_vars||[]).filter(v=>/^#|rgb|hsl/.test(v.value))
+    .map(v=>swatch(v.value, v.name.replace(/^--/,""))).join("") || "<span class='empty'>no color tokens</span>";
+  $("#br-theme").innerHTML = Object.entries(b.theme||{}).map(([k,v])=>
+    `<span class="badge">${k} <b style="color:${esc(v)}">${esc(v)}</b></span>`).join("");
+
+  // gradients
+  $("#br-gradcard").style.display = b.gradients.length?"":"none";
+  $("#br-gradn").textContent = `· ${b.gradients.length}`;
+  $("#br-grads").innerHTML = b.gradients.map(g=>
+    `<div class="grad"><div class="g" style="background:${esc(g)}"></div><div class="c" title="${esc(g)}">${esc(g)}</div></div>`).join("");
+
+  // fonts — inject @font-face from real font files so samples render in the brand typeface
+  $("#br-fontn").textContent = `· ${b.fonts.length}`;
+  const styleEl = document.getElementById("br-fontface") || (()=>{const s=document.createElement("style");s.id="br-fontface";document.head.appendChild(s);return s;})();
+  let faces="", rows="";
+  const sample = "Aa Bb Cc · 0123";
+  (b.font_files||[]).forEach(url=>{
+    const fam = "bf-"+(_fontFace++);
+    faces += `@font-face{font-family:'${fam}';src:url('${url}');font-display:swap;}`;
+    const fname = url.split("/").pop().split("?")[0];
+    rows += `<div class="fontrow"><div class="name">${esc(fname)}</div>
+      <div class="sample" style="font-family:'${fam}',serif">${sample}</div></div>`;
+  });
+  styleEl.textContent = faces;
+  // named families (from CSS) — render with the family name directly (works if web-loaded)
+  const named = b.fonts.map(f=>
+    `<div class="fontrow"><div class="name">${esc(f.name)} <span class="status">×${f.count}</span></div>
+      <div class="sample" style="font-family:'${esc(f.name)}',serif">${sample}</div></div>`).join("");
+  $("#br-fonts").innerHTML = named + rows +
+    ((b.google_fonts||[]).length?`<div class="sub">Google Fonts: ${b.google_fonts.map(esc).join(", ")}</div>`:"")
+    || "<span class='empty'>no custom fonts found</span>";
+
+  // logos
+  $("#br-logocard").style.display = b.logos.length?"":"none";
+  $("#br-logos").innerHTML = b.logos.map(l=>thumbHtml(l.url, l.source)).join("");
+
+  // textures
+  $("#br-texcard").style.display = b.textures.length?"":"none";
+  $("#br-textures").innerHTML = b.textures.map(u=>thumbHtml(u, "texture")).join("");
+
+  // AI brand story
+  renderBrandHero(b);
+}
+
+function thumbHtml(url, cap){
+  return `<a class="thumb" href="${esc(url)}" target="_blank" rel="noreferrer" title="${esc(url)}">
+    <div class="imgbox"><img loading="lazy" src="${esc(url)}" referrerpolicy="no-referrer"
+      onerror="this.remove();this.parentNode.classList.add('broken')"></div>
+    <div class="cap"><span class="tag">${esc(cap)}</span></div></a>`;
+}
+
+function renderBrandHero(b){
+  const hero=$("#br-hero");
+  const a=b.ai;
+  if(!a){
+    hero.style.display = (b.ai_error||b.ai_raw)?"":"none";
+    if(b.ai_error) hero.innerHTML=`<span class="pill bad">Gemini error</span> ${esc(b.ai_error)}`;
+    else if(b.ai_raw) hero.innerHTML=`<pre class="out">${esc(b.ai_raw)}</pre>`;
+    return;
+  }
+  hero.style.display="";
+  const list = (arr,fn)=> (arr&&arr.length)?arr.map(fn).join(""):"";
+  hero.innerHTML = `
+    <h2>${esc(a.brand_name||"Brand")}</h2>
+    ${a.tagline?`<div class="tag">${esc(a.tagline)}</div>`:""}
+    ${a.brand_story?`<p>${esc(a.brand_story)}</p>`:""}
+    <div class="meta" style="margin-top:10px">
+      ${a.tone_of_voice?`<span class="badge">tone <b>${esc(a.tone_of_voice)}</b></span>`:""}
+      ${a.target_audience?`<span class="badge">audience <b>${esc(a.target_audience)}</b></span>`:""}
+      ${a.mission?`<span class="badge">mission <b>${esc(a.mission)}</b></span>`:""}
+    </div>
+    ${a.color_story?`<p class="kv"><b>Color story:</b> ${esc(a.color_story)}</p>`:""}
+    ${a.visual_style?`<p class="kv"><b>Visual style:</b> ${esc(a.visual_style)}</p>`:""}
+    ${(a.current_campaigns||[]).length?`<div class="sectitle">Current campaigns</div><div class="campaigns">${
+      list(a.current_campaigns, c=>`<div class="ccard"><div class="t">${esc(c.name||"")}</div>
+        <div class="d">${esc(c.description||"")}</div>${c.dates?`<div class="when">📅 ${esc(c.dates)}</div>`:""}</div>`)}</div>`:""}
+    ${(a.offers||[]).length?`<div class="sectitle">Offers</div><div class="campaigns">${
+      list(a.offers, o=>`<div class="ccard"><div class="t">${esc(o.text||"")}</div>
+        ${o.code?`<div class="d">code: <b>${esc(o.code)}</b></div>`:""}${o.expires?`<div class="when">⏳ expires ${esc(o.expires)}</div>`:""}</div>`)}</div>`:""}
+    ${(a.new_arrivals||[]).length?`<div class="sectitle">New arrivals</div><div class="campaigns">${
+      list(a.new_arrivals, n=>`<div class="ccard"><div class="t">${esc(n.name||"")}</div><div class="d">${esc(n.detail||"")}</div></div>`)}</div>`:""}
+    ${(a.notable_dates||[]).length?`<div class="sectitle">Notable dates</div><div class="meta">${
+      list(a.notable_dates, d=>`<span class="badge">${esc(d)}</span>`)}</div>`:""}
+  `;
+}
+
+// ---------- AI tab ----------
+const AI_PRESETS = [
+  ["Quotes → JSON","Extract every quote with its author and tags as a JSON array of {quote, author, tags}."],
+  ["Products","Extract all products as JSON: {name, price, currency, rating, url}."],
+  ["Article","Summarize this page as JSON: {title, author, date, summary, key_points:[...]}." ],
+  ["Contacts","Extract all emails, phone numbers and social links as JSON."],
+  ["Table → JSON","Convert the main table on the page into a JSON array of row objects."],
+];
+$("#ai-presets").innerHTML = AI_PRESETS.map((p,i)=>`<button class="sm" data-a="${i}">${p[0]}</button>`).join("");
+$$("#ai-presets [data-a]").forEach(b=>b.onclick=()=>{ $("#ai-instruction").value = AI_PRESETS[b.dataset.a][1]; });
+
+$("#ai-go").onclick = async () => {
+  if(!geminiKey()){ $("#ai-status").innerHTML=`<span class="pill bad">no key</span> add a Gemini key in API Keys`; $$(".tab").find(t=>t.dataset.view==="keys").click(); return; }
+  const btn=$("#ai-go"); btn.disabled=true; $("#ai-status").textContent="thinking…";
+  try{
+    const d = await api("/api/ai", {
+      gemini_key:geminiKey(), model:$("#ai-model").value,
+      instruction:$("#ai-instruction").value, doc_id:STATE.docId, content:$("#ai-content").value
+    });
+    $("#ai-empty").style.display="none"; $("#ai-result").style.display="";
+    $("#ai-meta").innerHTML = `<span class="badge">model <b>${esc(d.model)}</b></span><span class="badge">context <b>${(d.chars/1024).toFixed(1)} KB</b></span><span class="badge">valid JSON <b>${d.json?'✓':'✗'}</b></span>`;
+    $("#ai-out").textContent = d.json ? JSON.stringify(d.json,null,2) : d.raw;
+    $("#ai-status").textContent="done";
+  }catch(e){ $("#ai-status").innerHTML=`<span class="pill bad">error</span> ${esc(e.message)}`; }
+  finally{ btn.disabled=false; }
+};
+
+loadKeys(); syncDocRefs();
+</script>
+</body>
+</html>
