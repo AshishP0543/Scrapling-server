@@ -31,6 +31,36 @@ import traceback
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
+# Load .env (repo root, then dashboard/) into os.environ without overriding existing vars.
+# Kept dependency-free — supports KEY=VALUE, optional quotes, comments, and blank lines.
+def _load_dotenv():
+    here = os.path.dirname(os.path.abspath(__file__))
+    for path in (os.path.join(os.path.dirname(here), ".env"), os.path.join(here, ".env")):
+        if not os.path.isfile(path):
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    if line.startswith("export "):
+                        line = line[7:].lstrip()
+                    k, _, v = line.partition("=")
+                    k = k.strip()
+                    v = v.strip()
+                    if len(v) >= 2 and v[0] == v[-1] and v[0] in ("'", '"'):
+                        v = v[1:-1]
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+        except OSError:
+            pass
+
+
+_load_dotenv()
+
 import server  # the dashboard engine layer (do_fetch, do_brand, do_assets, do_ai, …)
 from server import (  # noqa: E402
     Selector, Fetcher, DOCS, capabilities, raw_html, page_to_markdown,
@@ -42,6 +72,9 @@ PORT = int(os.environ.get("SCRAPLING_API_PORT", "8771"))
 # Shared-secret token. When set, every POST (the fetch surface) must present it via
 # an `X-API-Token` header or a `?token=` query param. Empty → auth disabled (local only).
 TOKEN = os.environ.get("SCRAPLING_API_TOKEN", "").strip()
+# Default Gemini API key. Used when a request body omits `gemini_key`.
+# Accepts the standard `GEMINI_API_KEY` (or legacy `GEMINI_KEY`) from .env / shell env.
+DEFAULT_GEMINI_KEY = (os.environ.get("GEMINI_API_KEY") or os.environ.get("GEMINI_KEY") or "").strip()
 
 
 # ---------------------------------------------------------------------------
@@ -393,6 +426,8 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(length) or b"{}")
         except Exception as e:
             return self._send(400, {"ok": False, "error": f"bad JSON body: {e}"})
+        if DEFAULT_GEMINI_KEY and not (payload.get("gemini_key") or "").strip():
+            payload["gemini_key"] = DEFAULT_GEMINI_KEY
         t0 = time.time()
         try:
             data = handler(payload)
@@ -410,6 +445,7 @@ def main():
     print(" Scrapling Scraping API")
     print(f"   url      : http://{HOST}:{PORT}   (docs at /)")
     print(f"   auth     : {'ON  (X-API-Token required on POST)' if TOKEN else 'OFF — set SCRAPLING_API_TOKEN before exposing publicly!'}")
+    print(f"   gemini   : {'ON  (default key from env — body `gemini_key` overrides)' if DEFAULT_GEMINI_KEY else 'OFF — pass `gemini_key` per request or set GEMINI_API_KEY'}")
     print(f"   engines  : basic=on stealthy={'on' if caps['stealthy'] else 'off'} "
           f"dynamic={'on' if caps['dynamic'] else 'off'} browsers={'on' if caps['browsers'] else 'off'}")
     print("   routes   : /v1/scrape /v1/product /v1/brand /v1/assets /v1/extract")
