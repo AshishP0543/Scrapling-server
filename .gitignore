@@ -17,6 +17,7 @@ __pycache__/
 .build
 .ve
 .env
+deploy/k8s/secret.yaml
 .pytest
 .benchmarks
 .bootstrap

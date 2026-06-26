@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scrapling
+  labels: { app: scrapling }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: scrapling }
+  template:
+    metadata:
+      labels: { app: scrapling }
+    spec:
+      containers:
+        - name: api
+          image: REGION-docker.pkg.dev/PROJECT_ID/scrapling/scrapling:latest
+          imagePullPolicy: IfNotPresent
+          args: ["api"]
+          ports:
+            - { name: api, containerPort: 8771 }
+          env:
+            - { name: SCRAPLING_API_HOST, value: "0.0.0.0" }
+            - { name: SCRAPLING_API_PORT, value: "8771" }
+            - name: SCRAPLING_API_TOKEN
+              valueFrom: { secretKeyRef: { name: scrapling-secrets, key: api-token } }
+            - name: GEMINI_API_KEY
+              valueFrom: { secretKeyRef: { name: scrapling-secrets, key: gemini-key } }
+          readinessProbe:
+            httpGet: { path: /v1/health, port: 8771 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /v1/health, port: 8771 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits:   { cpu: "1500m", memory: "2Gi" }
+
+        - name: dashboard
+          image: REGION-docker.pkg.dev/PROJECT_ID/scrapling/scrapling:latest
+          imagePullPolicy: IfNotPresent
+          args: ["dashboard"]
+          ports:
+            - { name: dashboard, containerPort: 8770 }
+          env:
+            - { name: SCRAPLING_DASH_HOST, value: "0.0.0.0" }
+            - { name: SCRAPLING_DASH_PORT, value: "8770" }
+            - name: GEMINI_API_KEY
+              valueFrom: { secretKeyRef: { name: scrapling-secrets, key: gemini-key } }
+          readinessProbe:
+            tcpSocket: { port: 8770 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 8770 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits:   { cpu: "500m", memory: "768Mi" }
