@@ -1,0 +1,14 @@
+[Unit]
+Description=cloudflared tunnel cv-node-0 (62ec6f67, ssh://localhost:22)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+TimeoutStartSec=15
+Type=notify
+ExecStart=/usr/bin/cloudflared --no-autoupdate tunnel run --token eyJhIjoiNWM1MWIyOTI3MzU4MzkwOGQ0MTVjY2M1YWRkMjNhZGIiLCJ0IjoiNjJlYzZmNjctMWU0ZS00MjcwLWJlZTctZjhmZWU0Yzk1NTk3IiwicyI6Ik9HVmlZMkU0T0RjdFl6RmxPQzAwWmpjNExUbGtPVEF0TURkak5XTm1NVFptTVdaaiJ9
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

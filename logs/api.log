@@ -1,0 +1,10 @@
+[api] "GET /v1/health HTTP/1.1" 200 -
+[api] "GET /v1/health HTTP/1.1" 200 -
+[api] "GET / HTTP/1.1" 200 -
+[api] "GET /favicon.ico HTTP/1.1" 404 -
+[api] "GET / HTTP/1.1" 200 -
+[api] "GET / HTTP/1.1" 200 -
+[api] "GET / HTTP/1.1" 200 -
+[api] "GET / HTTP/1.1" 200 -
+[api] "GET / HTTP/1.1" 200 -
+[api] "GET /v1/health HTTP/1.1" 200 -

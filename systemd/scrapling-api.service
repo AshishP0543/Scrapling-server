@@ -1,0 +1,18 @@
+[Unit]
+Description=Scrapling Scraping API (port 8771)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gl
+WorkingDirectory=/home/gl/dev/scrapling-server/scrapling-server/dashboard
+Environment=SCRAPLING_API_HOST=127.0.0.1
+Environment=SCRAPLING_API_PORT=8771
+Environment=SCRAPLING_API_TOKEN=u7jvbFjNYBv1j3ixPq9pL5k5SN-w5-Fs
+ExecStart=/home/gl/dev/scrapling-server/.scranv/bin/python api_server.py
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

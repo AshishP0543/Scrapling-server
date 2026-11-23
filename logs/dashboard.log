@@ -1,0 +1,29 @@
+[dash] "GET / HTTP/1.1" 200 -
+[dash] "GET / HTTP/1.1" 200 -
+[dash] "GET / HTTP/1.1" 200 -
+[dash] "GET /api/capabilities HTTP/1.1" 200 -
+[dash] "GET /favicon.ico HTTP/1.1" 404 -
+[dash] "GET / HTTP/1.1" 200 -
+[dash] "GET /api/capabilities HTTP/1.1" 200 -
+[2026-07-06 17:14:26] INFO: Fetched (200) <GET https://www.chanel.com/in/fragrance-beauty/gifts/fragrance-beauty-gifts/gifts-for-men/#fragrance> (referer: https://www.google.com/)
+[dash] "POST /api/fetch HTTP/1.1" 200 -
+[dash] "POST /api/assets HTTP/1.1" 200 -
+[2026-07-06 17:14:55] INFO: Fetched (200) <GET https://www.chanel.com/in/fragrance-beauty/gifts/fragrance-beauty-gifts/gifts-for-men/#fragrance> (referer: https://www.google.com/)
+[dash] "POST /api/fetch HTTP/1.1" 200 -
+[dash] "POST /api/assets HTTP/1.1" 200 -
+[dash] "GET / HTTP/1.1" 200 -
+[dash] "GET /api/capabilities HTTP/1.1" 200 -
+[dash] "GET / HTTP/1.1" 200 -
+[dash] "GET /api/capabilities HTTP/1.1" 200 -
+[2026-07-07 13:09:43] INFO: Fetched (200) <GET https://www.samsung.com/in/smartphones/galaxy-s26-ultra/buy/?cid=in_pd_pmax_google_gs26u_ongoing_gs26u-q126-s26-pmax-sbase-estore-maxcon-lod2c-pfm_multi_product-kv-1ur-503436l-2026&gad_source=1&gad_campaignid=23603074760&gbraid=0AAAAADm5iQU2SP-HEHDDDLsq0clmzfYUF&gclid=CjwKCAjwx7LSBhB3EiwAjcodxK3eRIfF17TWk3o0tXLPkUbNmqfoKRSx-gdDD_GxDDpLlSylnpLHRxoCJs8QAvD_BwE> (referer: https://www.google.com/)
+[dash] "POST /api/fetch HTTP/1.1" 200 -
+[dash] "POST /api/assets HTTP/1.1" 200 -
+[2026-07-07 16:01:21] INFO: Fetched (200) <GET https://www.balenciaga.com/en-en/balenciaga-%7C-manolo-blahnik-slingback-lime-A0024NW1WM83285.html> (referer: https://www.google.com/)
+[dash] "POST /api/fetch HTTP/1.1" 200 -
+[dash] "POST /api/assets HTTP/1.1" 200 -
+[dash] "GET / HTTP/1.1" 200 -
+[dash] "GET /api/capabilities HTTP/1.1" 200 -
+[dash] "GET / HTTP/1.1" 200 -
+[dash] "GET / HTTP/1.1" 200 -
+[dash] "GET /favicon.ico HTTP/1.1" 404 -
+[dash] "GET /api/capabilities HTTP/1.1" 200 -

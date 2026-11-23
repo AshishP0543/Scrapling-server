@@ -1,0 +1,17 @@
+[Unit]
+Description=Scrapling Dashboard UI (port 8770)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gl
+WorkingDirectory=/home/gl/dev/scrapling-server/scrapling-server/dashboard
+Environment=SCRAPLING_DASH_HOST=127.0.0.1
+Environment=SCRAPLING_DASH_PORT=8770
+ExecStart=/home/gl/dev/scrapling-server/.scranv/bin/python server.py
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
